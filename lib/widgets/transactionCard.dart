@@ -46,13 +46,27 @@ class TransactionCard extends StatelessWidget {
             fontWeight: FontWeight.normal,
           ),
         ),
-        trailing: IconButton(
-          icon: Icon(
-            Icons.delete_forever,
-            color: Theme.of(context).errorColor,
-          ),
-          onPressed: () => deleteHandler(id),
-        ),
+        trailing: MediaQuery.of(context).size.width > 380
+            ? TextButton.icon(
+                onPressed: () => deleteHandler(id),
+                icon: Icon(
+                  Icons.delete_forever,
+                  color: Theme.of(context).errorColor,
+                ),
+                label: Text(
+                  'Delete',
+                  style: TextStyle(
+                    color: Theme.of(context).errorColor,
+                  ),
+                ),
+              )
+            : IconButton(
+                icon: Icon(
+                  Icons.delete_forever,
+                  color: Theme.of(context).errorColor,
+                ),
+                onPressed: () => deleteHandler(id),
+              ),
       ),
     );
   }
