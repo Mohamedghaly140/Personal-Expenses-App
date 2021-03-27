@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 // import 'package:flutter/services.dart';
 
 import './models/transaction.dart';
@@ -115,18 +117,35 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isIOS = Platform.isIOS;
     final mediaQuery = MediaQuery.of(context);
-    final bool isLandscape = mediaQuery.orientation == Orientation.landscape;
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
 
-    final appBar = AppBar(
-      title: Text('Personal Expenses'),
-      actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.add),
-          onPressed: () => _openAddTransactionModal(context),
-        )
-      ],
-    );
+    final PreferredSizeWidget appBar = isIOS
+        ? CupertinoNavigationBar(
+            middle: Text(
+              'Personal Expenses',
+              style: TextStyle(color: Theme.of(context).primaryColor),
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                GestureDetector(
+                  child: Icon(CupertinoIcons.add),
+                  onTap: () => _openAddTransactionModal(context),
+                )
+              ],
+            ),
+          )
+        : AppBar(
+            title: Text('Personal Expenses'),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.add),
+                onPressed: () => _openAddTransactionModal(context),
+              )
+            ],
+          );
 
     final txListWidget = Container(
       margin: EdgeInsets.symmetric(horizontal: 10),
@@ -140,9 +159,20 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
 
-    return Scaffold(
-      appBar: appBar,
-      body: SingleChildScrollView(
+    final txListWidgetLandscape = Container(
+      margin: EdgeInsets.symmetric(horizontal: 10),
+      height: (mediaQuery.size.height -
+              appBar.preferredSize.height -
+              mediaQuery.padding.top) *
+          0.88,
+      child: TransactionList(
+        transactions: _userTransactions,
+        deleteTransactionHandler: _deleteTransaction,
+      ),
+    );
+
+    final pageBody = SafeArea(
+      child: SingleChildScrollView(
         child: Column(
           children: <Widget>[
             if (isLandscape)
@@ -150,7 +180,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Text('Show Chart'),
-                  Switch(
+                  Switch.adaptive(
+                    activeColor: Theme.of(context).accentColor,
                     value: _showChart,
                     onChanged: (val) {
                       setState(() {
@@ -178,16 +209,29 @@ class _MyHomePageState extends State<MyHomePage> {
                           0.65,
                       child: Chart(_recentTransactions),
                     )
-                  : txListWidget
+                  : txListWidgetLandscape
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        elevation: 10,
-        child: Icon(Icons.add),
-        onPressed: () => _openAddTransactionModal(context),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
+
+    return isIOS
+        ? CupertinoPageScaffold(
+            child: pageBody,
+            navigationBar: appBar,
+          )
+        : Scaffold(
+            appBar: appBar,
+            body: pageBody,
+            floatingActionButton: isIOS
+                ? Container()
+                : FloatingActionButton(
+                    elevation: 10,
+                    child: Icon(Icons.add),
+                    onPressed: () => _openAddTransactionModal(context),
+                  ),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+          );
   }
 }
